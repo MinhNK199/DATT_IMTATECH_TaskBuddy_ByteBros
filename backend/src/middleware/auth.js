@@ -3,6 +3,14 @@ import { admin } from "../config/database.js";
 // Middleware xác thực Firebase token
 export const authenticateToken = async (req, res, next) => {
     try {
+        // Kiểm tra xem Firebase đã được khởi tạo chưa
+        if (!admin) {
+            return res.status(503).json({
+                success: false,
+                message: 'Firebase chưa được cấu hình. Vui lòng kiểm tra cấu hình môi trường.'
+            });
+        }
+
         const authHeader = req.headers.authorization;
         const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 

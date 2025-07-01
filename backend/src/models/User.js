@@ -52,9 +52,9 @@ const userSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Index để tối ưu tìm kiếm
-userSchema.index({ email: 1 });
-userSchema.index({ uid: 1 });
+// Không cần tạo index thêm vì đã có unique: true
+// userSchema.index({ email: 1 });
+// userSchema.index({ uid: 1 });
 
 const User = mongoose.model('User', userSchema);
 

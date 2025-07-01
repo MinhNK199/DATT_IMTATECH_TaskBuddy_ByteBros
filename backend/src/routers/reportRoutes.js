@@ -9,7 +9,7 @@ const router = Router();
 router.use(authenticateToken);
 
 // CRUD báo cáo
-router.post("/", validateReport, ReportController.createReport);
+router.post("/", validateReport.generate, ReportController.createReport);
 router.get("/", ReportController.getReports);
 router.get("/dashboard", ReportController.getDashboardData);
 router.get("/quick", ReportController.generateQuickReport);
