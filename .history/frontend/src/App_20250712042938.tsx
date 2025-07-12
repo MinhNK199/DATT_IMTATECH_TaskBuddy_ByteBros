@@ -9,7 +9,6 @@ import TaskClient from './client/TaskClient';
 import Login from './client/Login';
 import Register from './client/Register';
 import Profile from './client/Profile';
-import Home from './client/Home';
 
 // Auth check HOC
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -34,7 +33,7 @@ const App = () => {
             <ClientLayout />
           </ProtectedRoute>
         }>
-          <Route index element={<Home />} />
+          <Route index element={<Navigate to="/tasks" replace />} />
           <Route path="tasks" element={<TaskClient />} />
           <Route path="profile" element={<Profile />} />
         </Route>
