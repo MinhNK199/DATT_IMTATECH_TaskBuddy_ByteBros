@@ -58,8 +58,23 @@ const TaskClient: React.FC = () => {
     setLoading(true);
     setError(null);
 
+    // Kiểm tra trường bắt buộc
+    if (!newTask.title || !newTask.dueDate) {
+      setError('Vui lòng nhập đầy đủ tiêu đề và hạn chót cho task!');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await api.post('/tasks', newTask);
+      const payload = {
+        title: newTask.title,
+        description: newTask.description,
+        category: newTask.category,
+        priority: newTask.priority,
+        dueDate: new Date(newTask.dueDate).toISOString(),
+        estimatedHours: newTask.estimatedHours
+      };
+      const response = await api.post('/tasks', payload);
       if (response.data.success) {
         setTasks([response.data.data, ...tasks]);
         setShowNewTaskForm(false);

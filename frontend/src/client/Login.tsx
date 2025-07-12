@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { auth } from '../services/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -10,6 +12,7 @@ const Login: React.FC = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -22,21 +25,20 @@ const Login: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
-      const response = await api.post('/auth/login', formData);
-      
-      if (response.data.success) {
-        // Store token in localStorage
-        localStorage.setItem('token', response.data.data.token);
-        
-        // Redirect to dashboard
-        navigate('/tasks');
-      } else {
-        setError(response.data.message || 'Login failed');
-      }
+      // Đăng nhập qua Firebase SDK
+      const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      const idToken = await userCredential.user.getIdToken();
+      // Lưu idToken vào localStorage
+      localStorage.setItem('token', idToken);
+      setSuccessMessage('Đăng nhập thành công!');
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'An error occurred during login');
+      setError(err.message || 'An error occurred during login');
       console.error('Login error:', err);
     } finally {
       setLoading(false);
@@ -110,6 +112,12 @@ const Login: React.FC = () => {
                   <p className="text-sm text-red-700">{error}</p>
                 </div>
               </div>
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
+              <p>{successMessage}</p>
             </div>
           )}
           

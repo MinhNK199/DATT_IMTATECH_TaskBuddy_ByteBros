@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { auth } from '../services/firebase';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -11,6 +13,7 @@ const Register: React.FC = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -23,27 +26,28 @@ const Register: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
-      console.log("Sending registration data:", formData);
-      const response = await api.post('/auth/register', formData);
-      
-      console.log("Server response:", response);
-      
-      if (response.data.success) {
-        // Store token
-        localStorage.setItem('token', response.data.data.token);
-        
-        // Redirect to dashboard
-        navigate('/tasks');
-      } else {
-        setError(response.data.message || 'Registration failed');
-      }
+      // Đăng ký qua Firebase SDK
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      // Cập nhật displayName
+      await updateProfile(userCredential.user, { displayName: formData.displayName });
+      const idToken = await userCredential.user.getIdToken();
+      // Lưu idToken vào localStorage
+      localStorage.setItem('token', idToken);
+      // Gọi API backend để tạo user profile
+      await api.post('/users/profile', {
+        displayName: formData.displayName,
+        email: formData.email
+      });
+      setSuccessMessage('Đăng ký thành công!');
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
     } catch (err: any) {
-      console.error("Full error object:", err);
-      console.error("Error response data:", err.response?.data);
-      console.error("Error status:", err.response?.status);
-      setError(err.response?.data?.message || 'An error occurred during registration');
+      setError(err.message || 'An error occurred during registration');
+      console.error('Registration error:', err);
     } finally {
       setLoading(false);
     }
@@ -74,6 +78,12 @@ const Register: React.FC = () => {
             </div>
           )}
           
+          {successMessage && (
+            <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
+              <p>{successMessage}</p>
+            </div>
+          )}
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="display-name" className="block text-sm font-medium text-gray-700 mb-1">

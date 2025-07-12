@@ -19,7 +19,7 @@ const Profile: React.FC = () => {
     const fetchUserProfile = async () => {
       setLoading(true);
       try {
-        const response = await api.get('/api/users/profile');
+        const response = await api.get('/users/profile');
         if (response.data.success) {
           setProfile(response.data.data);
           setFormData({
@@ -57,7 +57,7 @@ const Profile: React.FC = () => {
     setError(null);
     
     try {
-      const response = await api.put('/api/users/profile', {
+      const response = await api.put('/users/profile', {
         displayName: formData.displayName,
         preferences: {
           theme: formData.theme,

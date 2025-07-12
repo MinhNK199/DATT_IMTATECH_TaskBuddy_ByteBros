@@ -1,17 +1,12 @@
-import { Router } from "express";
-import AIController from "../controllers/aiController.js";
-import { authenticateToken } from "../middleware/auth.js";
+const express = require('express');
+const router = express.Router();
+const aiController = require('../controllers/aiController');
+const { authenticateToken } = require('../middleware/auth');
 
-const router = Router();
+router.get('/suggest-tasks', authenticateToken, aiController.suggestTasks);
+router.get('/performance', authenticateToken, aiController.getPerformance);
+router.get('/reminders', authenticateToken, aiController.getReminders);
+router.get('/summary', authenticateToken, aiController.getSummary);
+router.post('/analyze-task', authenticateToken, aiController.analyzeTask);
 
-// Tất cả routes đều cần xác thực
-router.use(authenticateToken);
-
-// AI Schedule và Insights
-router.get("/schedule", AIController.generateSchedule);
-router.get("/insights", AIController.generateProductivityInsights);
-router.get("/suggestions", AIController.getOptimizationSuggestions);
-router.get("/workload", AIController.analyzeWorkload);
-router.get("/recommendations", AIController.getProductivityRecommendations);
-
-export default router; 
+module.exports = router; 

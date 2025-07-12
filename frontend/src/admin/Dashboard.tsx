@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { CheckCircleOutlined, ExclamationCircleOutlined, ClockCircleOutlined, UserOutlined, FileDoneOutlined } from '@ant-design/icons';
+import { getAIAggregateAdmin } from '../services/api';
 
 const stats = [
   {
@@ -55,45 +56,58 @@ const chartData = [
   { month: 'Dec', done: 120 },
 ];
 
-const Dashboard: React.FC = () => (
-  <>
-    <h1 className="text-3xl font-bold mb-6 mt-0">Admin Dashboard</h1>
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-      {stats.map((stat, idx) => (
-        <div key={idx} className={`flex items-center ${stat.bg} rounded-lg shadow p-4 hover:shadow-lg transition-shadow duration-200 min-w-0`}>
-          <div className={`flex items-center justify-center rounded-full w-12 h-12 ${stat.iconBg} mr-4`}>
-            {stat.icon}
+const Dashboard: React.FC = () => {
+  const [aiStats, setAIStats] = useState<any>(null);
+
+  useEffect(() => {
+    getAIAggregateAdmin().then(res => {
+      if (res.data.success) setAIStats(res.data);
+    }).catch(() => {});
+  }, []);
+
+  return (
+    <>
+      <h1 className="text-3xl font-bold mb-6 mt-0">Admin Dashboard</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+        {stats.map((stat, idx) => (
+          <div key={idx} className={`flex items-center ${stat.bg} rounded-lg shadow p-4 hover:shadow-lg transition-shadow duration-200 min-w-0`}>
+            <div className={`flex items-center justify-center rounded-full w-12 h-12 ${stat.iconBg} mr-4`}>
+              {stat.icon}
+            </div>
+            <div className="truncate">
+              <div className="text-base font-semibold mb-1 truncate">{stat.title}</div>
+              <div className="text-xl font-bold">{stat.value}</div>
+            </div>
           </div>
-          <div className="truncate">
-            <div className="text-base font-semibold mb-1 truncate">{stat.title}</div>
-            <div className="text-xl font-bold">{stat.value}</div>
-          </div>
-        </div>
-      ))}
-    </div>
-    <div className="bg-white rounded-lg shadow p-6 mb-8">
-      <h2 className="text-xl font-semibold mb-4">Thống kê task hoàn thành theo tháng</h2>
-      <div style={{ width: '100%', height: 300 }}>
-        <ResponsiveContainer>
-          <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip />
-            <Bar dataKey="done" fill="#2563eb" radius={[6, 6, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+        ))}
       </div>
-    </div>
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-xl font-semibold mb-2">Báo cáo gần đây</h2>
-      <ul className="list-disc pl-5 text-gray-700">
-        <li>Báo cáo 1</li>
-        <li>Báo cáo 2</li>
-        <li>Báo cáo 3</li>
-      </ul>
-    </div>
-  </>
-);
+      <div className="bg-white rounded-lg shadow p-6 mb-8">
+        <h2 className="text-xl font-semibold mb-4">Thống kê task hoàn thành theo tháng</h2>
+        <div style={{ width: '100%', height: 300 }}>
+          <ResponsiveContainer>
+            <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="done" fill="#2563eb" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-2xl font-bold mb-4">Thống kê AI</h2>
+        {aiStats ? (
+          <div>
+            <div className="mb-2">Số task có AI suggestion: <b>{aiStats.aiTaskCount}</b></div>
+            <div className="mb-2">Tổng số gợi ý AI đã tạo: <b>{aiStats.totalAISuggestions}</b></div>
+          </div>
+        ) : (
+          <div>Đang tải thống kê AI...</div>
+        )}
+      </div>
+    </>
+  );
+};
 
 export default Dashboard; 

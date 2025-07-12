@@ -91,4 +91,21 @@ export const checkReportOwnership = async (req, res, next) => {
             message: 'Lỗi server'
         });
     }
+};
+
+// Middleware kiểm tra quyền admin
+export const verifyAdmin = (req, res, next) => {
+    // Ví dụ: kiểm tra email có nằm trong danh sách admin hoặc custom claim
+    const adminEmails = [
+        'admin@example.com', // Thay bằng email admin thực tế
+    ];
+    if (adminEmails.includes(req.user.email)) {
+        return next();
+    }
+    // Nếu dùng custom claim từ Firebase:
+    // if (req.user.isAdmin) return next();
+    return res.status(403).json({
+        success: false,
+        message: 'Bạn không có quyền admin.'
+    });
 }; 

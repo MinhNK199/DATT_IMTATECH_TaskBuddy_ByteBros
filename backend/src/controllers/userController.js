@@ -5,7 +5,16 @@ class UserController {
     // Tạo hoặc cập nhật user profile
     async createOrUpdateUser(req, res) {
         try {
-            const { uid, email, displayName, photoURL, provider } = req.body;
+            // Lấy uid từ middleware xác thực
+            const uid = req.user?.uid;
+            const { email, displayName, photoURL, provider } = req.body;
+
+            if (!uid) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Thiếu uid (token không hợp lệ hoặc chưa xác thực)'
+                });
+            }
 
             // Kiểm tra user đã tồn tại
             let user = await User.findOne({ uid });
@@ -14,8 +23,8 @@ class UserController {
                 // Cập nhật thông tin user
                 user.email = email;
                 user.displayName = displayName;
-                user.photoURL = photoURL;
-                user.provider = provider;
+                user.photoURL = photoURL || user.photoURL;
+                user.provider = provider || user.provider;
                 user.updatedAt = new Date();
             } else {
                 // Tạo user mới
@@ -23,8 +32,8 @@ class UserController {
                     uid,
                     email,
                     displayName,
-                    photoURL,
-                    provider
+                    photoURL: photoURL || null,
+                    provider: provider || 'email'
                 });
             }
 

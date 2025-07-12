@@ -111,6 +111,17 @@ taskSchema.virtual('progress').get(function() {
     return 0;
 });
 
+// Virtual field để tính thời gian còn lại đến deadline
+// Trả về số mili-giây còn lại, nếu đã quá hạn hoặc completed thì trả về 0
+// Có thể mở rộng trả về object (days, hours, minutes, seconds) nếu cần
+
+taskSchema.virtual('timeLeft').get(function() {
+    if (this.status === 'completed') return 0;
+    const now = new Date();
+    const diff = this.dueDate - now;
+    return diff > 0 ? diff : 0;
+});
+
 // Middleware để cập nhật completedAt
 taskSchema.pre('save', function(next) {
     if (this.status === 'completed' && !this.completedAt) {

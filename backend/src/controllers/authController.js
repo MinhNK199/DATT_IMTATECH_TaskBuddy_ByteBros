@@ -26,6 +26,7 @@ class AuthController {
                     displayName
                 });
             } catch (firebaseError) {
+                console.error('Firebase error chi tiết:', firebaseError);
                 return res.status(400).json({
                     success: false,
                     message: 'Lỗi tạo tài khoản Firebase: ' + firebaseError.message

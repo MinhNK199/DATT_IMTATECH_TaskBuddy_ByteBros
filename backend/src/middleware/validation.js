@@ -82,6 +82,11 @@ const taskSchemas = {
         tags: Joi.array().items(Joi.string().max(20)).max(10).optional().messages({
             'array.max': 'Tối đa 10 tags',
             'string.max': 'Mỗi tag không được quá 20 ký tự'
+        }),
+        estimatedHours: Joi.number().min(0).max(24).optional().messages({
+            'number.base': 'estimatedHours phải là số',
+            'number.min': 'estimatedHours phải >= 0',
+            'number.max': 'estimatedHours phải <= 24'
         })
     }),
 

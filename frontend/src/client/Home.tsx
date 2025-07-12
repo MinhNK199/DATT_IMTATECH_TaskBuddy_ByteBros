@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import { getAISuggestions, getAIPerformance } from '../services/api';
 
 const Home: React.FC = () => {
   const [stats, setStats] = useState({
@@ -11,11 +12,13 @@ const Home: React.FC = () => {
   const [recentTasks, setRecentTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [aiSuggestions, setAISuggestions] = useState<any[]>([]);
+  const [aiPerformance, setAIPerformance] = useState<any>(null);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const response = await api.get('/api/auth/check');
+        const response = await api.get('/auth/check');
         if (response.data.success) {
           setUser(response.data.data.user);
         }
@@ -32,13 +35,13 @@ const Home: React.FC = () => {
       setLoading(true);
       try {
         // Get task stats
-        const statsResponse = await api.get('/api/tasks/stats');
+        const statsResponse = await api.get('/tasks/stats');
         if (statsResponse.data.success) {
           setStats(statsResponse.data.data);
         }
 
         // Get recent tasks
-        const tasksResponse = await api.get('/api/tasks?limit=5&sortBy=createdAt&sortOrder=desc');
+        const tasksResponse = await api.get('/tasks?limit=5&sortBy=createdAt&sortOrder=desc');
         if (tasksResponse.data.success) {
           setRecentTasks(tasksResponse.data.data);
         }
@@ -50,6 +53,17 @@ const Home: React.FC = () => {
     };
 
     fetchDashboardData();
+  }, []);
+
+  useEffect(() => {
+    // Fetch AI suggestions
+    getAISuggestions().then(res => {
+      if (res.data.success) setAISuggestions(res.data.suggestions);
+    }).catch(() => {});
+    // Fetch AI performance
+    getAIPerformance().then(res => {
+      if (res.data.success) setAIPerformance(res.data);
+    }).catch(() => {});
   }, []);
 
   // Format date
@@ -304,6 +318,31 @@ const Home: React.FC = () => {
                 </ul>
               </div>
             </div>
+          </div>
+        )}
+        {/* AI Suggestions Section */}
+        {aiSuggestions.length > 0 && (
+          <div className="bg-yellow-50 rounded-xl shadow-sm border border-yellow-100 p-6 mb-6">
+            <h3 className="text-lg font-bold text-yellow-800 mb-2">Gợi ý từ AI</h3>
+            <ul className="list-disc pl-6 text-yellow-900">
+              {aiSuggestions.map((s, idx) => (
+                <li key={idx}>{s.suggestion || s}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {/* AI Performance Section */}
+        {aiPerformance && aiPerformance.stats && (
+          <div className="bg-blue-50 rounded-xl shadow-sm border border-blue-100 p-6 mb-6">
+            <h3 className="text-lg font-bold text-blue-800 mb-2">Hiệu suất cá nhân (AI)</h3>
+            <div className="mb-2">Tổng task: {aiPerformance.stats.totalTasks} | Hoàn thành: {aiPerformance.stats.completedTasks} | Quá hạn: {aiPerformance.stats.overdueTasks} | Tỉ lệ hoàn thành: {aiPerformance.stats.completionRate}%</div>
+            {aiPerformance.suggestions && aiPerformance.suggestions.length > 0 && (
+              <ul className="list-disc pl-6 text-blue-900">
+                {aiPerformance.suggestions.map((s: any, idx: number) => (
+                  <li key={idx}>{s.suggestion || s.insight || s}</li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
       </div>

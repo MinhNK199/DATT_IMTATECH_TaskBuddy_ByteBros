@@ -77,10 +77,12 @@ class TaskController {
             const skip = (page - 1) * limit;
             const sort = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };
 
+            // Sử dụng lean({ virtuals: true }) để trả về virtual fields
             const tasks = await Task.find(query)
                 .sort(sort)
                 .skip(skip)
-                .limit(parseInt(limit));
+                .limit(parseInt(limit))
+                .lean({ virtuals: true });
 
             const total = await Task.countDocuments(query);
 
@@ -231,13 +233,14 @@ class TaskController {
             const endOfDay = new Date(date);
             endOfDay.setHours(23, 59, 59, 999);
 
+            // Sử dụng lean({ virtuals: true }) để trả về virtual fields
             const tasks = await Task.find({
                 userId,
                 dueDate: {
                     $gte: startOfDay,
                     $lte: endOfDay
                 }
-            }).sort({ priority: -1, order: 1 });
+            }).sort({ priority: -1, order: 1 }).lean({ virtuals: true });
 
             res.json({
                 success: true,
@@ -257,11 +260,12 @@ class TaskController {
         try {
             const userId = req.user.uid;
 
+            // Sử dụng lean({ virtuals: true }) để trả về virtual fields
             const tasks = await Task.find({
                 userId,
                 status: { $ne: 'completed' },
                 dueDate: { $lt: new Date() }
-            }).sort({ dueDate: 1 });
+            }).sort({ dueDate: 1 }).lean({ virtuals: true });
 
             res.json({
                 success: true,
