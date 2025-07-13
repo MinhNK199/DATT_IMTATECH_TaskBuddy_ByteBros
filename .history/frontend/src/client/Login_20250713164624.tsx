@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import api, { getFirebaseErrorMessage } from '../services/api';
+import api from '../services/api';
 import { auth } from '../services/firebase';
 import { signInWithEmailAndPassword, AuthError } from 'firebase/auth';
 
@@ -19,6 +19,27 @@ const Login: React.FC = () => {
       ...formData,
       [e.target.name]: e.target.value
     });
+  };
+
+  // Hàm dịch lỗi Firebase sang tiếng Việt thân thiện
+  const getVietnameseErrorMessage = (errorCode: string): string => {
+    console.log('Firebase error code:', errorCode);
+    switch (errorCode) {
+      case 'auth/invalid-credential':
+      case 'auth/wrong-password':
+      case 'auth/user-not-found':
+        return 'Email hoặc mật khẩu không chính xác';
+      case 'auth/invalid-email':
+        return 'Email không đúng định dạng';
+      case 'auth/user-disabled':
+        return 'Tài khoản đã bị vô hiệu hóa';
+      case 'auth/too-many-requests':
+        return 'Quá nhiều lần đăng nhập thất bại. Vui lòng thử lại sau';
+      case 'auth/network-request-failed':
+        return 'Lỗi kết nối mạng. Vui lòng kiểm tra kết nối và thử lại';
+      default:
+        return 'Đã xảy ra lỗi trong quá trình đăng nhập. Vui lòng thử lại';
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,12 +63,10 @@ const Login: React.FC = () => {
       }, 1000);
     } catch (err: any) {
       console.error('Login error:', err);
-      // Xử lý lỗi Firebase sử dụng hàm từ api.ts
+      // Xử lý lỗi Firebase
       const errorCode = err.code || 'unknown';
-      setError(getFirebaseErrorMessage(errorCode));
-      
-      // Đảm bảo xóa token nếu đăng nhập thất bại
-      localStorage.removeItem('token');
+      const errorMessage = getVietnameseErrorMessage(errorCode);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

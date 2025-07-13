@@ -11,7 +11,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyCfliXHpA85IPGUc1CPKitrMQFf2EmX1_8",
   authDomain: "taskbuddy-bytebros.firebaseapp.com",
   projectId: "taskbuddy-bytebros",
-  storageBucket: "taskbuddy-bytebros.appspot.com",
+  storageBucket: "taskbuddy-bytebros.firebasestorage.app",
   messagingSenderId: "367870534189",
   appId: "1:367870534189:web:d032eea48ddc816f408ea4",
   measurementId: "G-14DFT5Q565"
@@ -20,9 +20,4 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-// Cài đặt ngôn ngữ cho Firebase Auth (mặc định là tiếng Anh)
-auth.useDeviceLanguage(); // Sử dụng ngôn ngữ của thiết bị
-// Hoặc có thể thiết lập cụ thể: auth.languageCode = 'vi'
 // const analytics = getAnalytics(app);
-
-export default app;

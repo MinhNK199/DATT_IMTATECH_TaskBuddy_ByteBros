@@ -31,15 +31,13 @@ api.interceptors.response.use(
   (error) => {
     console.error('API Error:', error.response?.status, error.response?.data);
     
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      console.error('Lỗi xác thực:', error.response.data);
+    if (error.response?.status === 401) {
+      console.error('Lỗi xác thực 401:', error.response.data);
       
       // Nếu token không hợp lệ hoặc hết hạn
       if (error.response.data?.message?.includes('invalid') || 
           error.response.data?.message?.includes('expired') || 
-          error.response.data?.message?.includes('unauthorized') ||
-          error.response.data?.message?.includes('không hợp lệ') ||
-          error.response.data?.message?.includes('hết hạn')) {
+          error.response.data?.message?.includes('unauthorized')) {
         console.log('Xóa token không hợp lệ và chuyển hướng về trang đăng nhập');
         localStorage.removeItem('token');
         // Chỉ redirect nếu không phải đang ở trang đăng nhập/đăng ký
@@ -48,12 +46,6 @@ api.interceptors.response.use(
         }
       }
     }
-    
-    // Xử lý lỗi Firebase
-    if (error.code && error.code.startsWith('auth/')) {
-      console.error('Firebase Auth Error:', error.code);
-    }
-    
     return Promise.reject(error);
   }
 );
@@ -65,29 +57,5 @@ export const getAIReminders = () => api.get('/ai/reminders');
 export const getAISummary = (type = 'day') => api.get(`/ai/summary?type=${type}`);
 export const analyzeTask = (task: { title: string; description?: string; dueDate?: string }) => api.post('/ai/analyze-task', task);
 export const getAIAggregateAdmin = () => api.get('/admin/ai/aggregate');
-
-// Các hàm xử lý lỗi Firebase
-export const getFirebaseErrorMessage = (errorCode: string): string => {
-  switch (errorCode) {
-    case 'auth/invalid-credential':
-    case 'auth/wrong-password':
-    case 'auth/user-not-found':
-      return 'Email hoặc mật khẩu không chính xác';
-    case 'auth/invalid-email':
-      return 'Email không đúng định dạng';
-    case 'auth/user-disabled':
-      return 'Tài khoản đã bị vô hiệu hóa';
-    case 'auth/too-many-requests':
-      return 'Quá nhiều lần đăng nhập thất bại. Vui lòng thử lại sau';
-    case 'auth/network-request-failed':
-      return 'Lỗi kết nối mạng. Vui lòng kiểm tra kết nối và thử lại';
-    case 'auth/email-already-in-use':
-      return 'Email này đã được đăng ký. Vui lòng sử dụng email khác hoặc đăng nhập';
-    case 'auth/weak-password':
-      return 'Mật khẩu không đủ mạnh. Vui lòng sử dụng ít nhất 6 ký tự';
-    default:
-      return 'Đã xảy ra lỗi trong quá trình xác thực. Vui lòng thử lại';
-  }
-};
 
 export default api; 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import api, { getFirebaseErrorMessage } from '../services/api';
+import api from '../services/api';
 import { auth } from '../services/firebase';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 
@@ -29,40 +29,25 @@ const Register: React.FC = () => {
     setSuccessMessage(null);
 
     try {
-      // Xóa token cũ nếu có
-      localStorage.removeItem('token');
-      
       // Đăng ký qua Firebase SDK
       const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
       // Cập nhật displayName
       await updateProfile(userCredential.user, { displayName: formData.displayName });
-      const idToken = await userCredential.user.getIdToken(true);
+      const idToken = await userCredential.user.getIdToken();
       // Lưu idToken vào localStorage
       localStorage.setItem('token', idToken);
-      
       // Gọi API backend để tạo user profile
-      try {
-        await api.post('/users/profile', {
-          displayName: formData.displayName,
-          email: formData.email
-        });
-      } catch (profileError) {
-        console.error('Error creating user profile:', profileError);
-        // Tiếp tục xử lý ngay cả khi tạo profile lỗi
-      }
-      
+      await api.post('/users/profile', {
+        displayName: formData.displayName,
+        email: formData.email
+      });
       setSuccessMessage('Đăng ký thành công!');
       setTimeout(() => {
         window.location.href = '/';
       }, 1000);
     } catch (err: any) {
+      setError(err.message || 'Đã xảy ra lỗi trong quá trình đăng ký');
       console.error('Registration error:', err);
-      // Xử lý lỗi Firebase sử dụng hàm từ api.ts
-      const errorCode = err.code || 'unknown';
-      setError(getFirebaseErrorMessage(errorCode));
-      
-      // Đảm bảo xóa token nếu đăng ký thất bại
-      localStorage.removeItem('token');
     } finally {
       setLoading(false);
     }

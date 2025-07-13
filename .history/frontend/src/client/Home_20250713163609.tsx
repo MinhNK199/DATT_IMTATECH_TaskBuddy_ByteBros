@@ -117,7 +117,7 @@ const Home: React.FC = () => {
   };
 
   // Thêm hàm mới để hiển thị thời gian bằng tiếng Việt
-  const getTimeRemainingVietnamese = (dueDate: string, status: string) => {
+  const getTimeRemainingVietnamese = (dueDate: string) => {
     if (status === 'completed') return null;
 
     const now = new Date();
@@ -230,7 +230,7 @@ const Home: React.FC = () => {
                               <h3 className="font-medium text-gray-800">{task.title}</h3>
                               <div className="flex space-x-4 mt-1 text-sm">
                                 <span className="text-gray-500">{task.category}</span>
-                                <span>{getTimeRemainingVietnamese(task.dueDate, task.status)}</span>
+                                <span>{getTimeRemainingVietnamese(task.dueDate)}</span>
                               </div>
                             </div>
                           </div>

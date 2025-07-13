@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import api, { getFirebaseErrorMessage } from '../services/api';
+import api from '../services/api';
 import { auth } from '../services/firebase';
-import { signInWithEmailAndPassword, AuthError } from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -28,12 +28,9 @@ const Login: React.FC = () => {
     setSuccessMessage(null);
 
     try {
-      // Xóa token cũ trước khi đăng nhập
-      localStorage.removeItem('token');
-      
       // Đăng nhập qua Firebase SDK
       const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
-      const idToken = await userCredential.user.getIdToken(true);
+      const idToken = await userCredential.user.getIdToken();
       // Lưu idToken vào localStorage
       localStorage.setItem('token', idToken);
       setSuccessMessage('Đăng nhập thành công!');
@@ -41,13 +38,8 @@ const Login: React.FC = () => {
         window.location.href = '/';
       }, 1000);
     } catch (err: any) {
+      setError(err.message || 'Đã xảy ra lỗi trong quá trình đăng nhập');
       console.error('Login error:', err);
-      // Xử lý lỗi Firebase sử dụng hàm từ api.ts
-      const errorCode = err.code || 'unknown';
-      setError(getFirebaseErrorMessage(errorCode));
-      
-      // Đảm bảo xóa token nếu đăng nhập thất bại
-      localStorage.removeItem('token');
     } finally {
       setLoading(false);
     }
