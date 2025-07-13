@@ -34,12 +34,25 @@ export interface Task {
   estimatedHours: number;
   actualHours?: number;
   tags?: string[];
-  attachments?: { name: string; url: string; type: string }[];
+  attachments?: {
+    name: string;
+    url: string;
+    type: string;
+  }[];
   notes?: string;
-  aiSuggestions?: { suggestion: string; type: string; createdAt: string }[];
-  order: number;
+  aiSuggestions?: {
+    suggestion: string;
+    type: 'schedule' | 'priority' | 'break' | 'optimization';
+    createdAt: string;
+  }[];
+  order?: number;
   createdAt: string;
   updatedAt: string;
+  
+  // Virtual fields from backend
+  isOverdue?: boolean;
+  progress?: number;
+  timeLeft?: number;
 }
 
 export interface TaskFilters {

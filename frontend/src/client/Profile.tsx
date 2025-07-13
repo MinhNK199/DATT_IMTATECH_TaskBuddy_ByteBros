@@ -29,10 +29,10 @@ const Profile: React.FC = () => {
             aiSuggestions: response.data.data.preferences?.aiSuggestions ?? true
           });
         } else {
-          setError(response.data.message || 'Failed to load profile');
+          setError(response.data.message || 'Không thể tải hồ sơ');
         }
       } catch (err: any) {
-        setError(err.response?.data?.message || 'An error occurred while loading profile');
+        setError(err.response?.data?.message || 'Đã xảy ra lỗi khi tải hồ sơ');
         console.error('Profile loading error:', err);
       } finally {
         setLoading(false);
@@ -68,13 +68,13 @@ const Profile: React.FC = () => {
       
       if (response.data.success) {
         setProfile(response.data.data);
-        setSuccessMessage('Profile updated successfully');
+        setSuccessMessage('Cập nhật hồ sơ thành công');
         setIsEditing(false);
       } else {
-        setError(response.data.message || 'Failed to update profile');
+        setError(response.data.message || 'Không thể cập nhật hồ sơ');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'An error occurred while updating profile');
+      setError(err.response?.data?.message || 'Đã xảy ra lỗi khi cập nhật hồ sơ');
       console.error('Profile update error:', err);
     }
   };
@@ -83,7 +83,7 @@ const Profile: React.FC = () => {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-10">
-          <p className="text-gray-500">Loading profile...</p>
+          <p className="text-gray-500">Đang tải hồ sơ...</p>
         </div>
       </div>
     );
@@ -102,7 +102,7 @@ const Profile: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Your Profile</h1>
+        <h1 className="text-2xl font-bold mb-6">Hồ sơ của bạn</h1>
         
         {error && (
           <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
@@ -140,50 +140,50 @@ const Profile: React.FC = () => {
                 onClick={() => setIsEditing(true)}
                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
               >
-                Edit Profile
+                Chỉnh sửa hồ sơ
               </button>
             </div>
             
             <div className="border-t border-gray-200 pt-4">
-              <h3 className="text-lg font-medium mb-3">Account Information</h3>
+              <h3 className="text-lg font-medium mb-3">Thông tin tài khoản</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-500">Account Type</p>
+                  <p className="text-sm text-gray-500">Loại tài khoản</p>
                   <p>{profile.provider === 'google' ? 'Google' : 'Email'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Member Since</p>
+                  <p className="text-sm text-gray-500">Thành viên từ</p>
                   <p>{new Date(profile.createdAt).toLocaleDateString()}</p>
                 </div>
               </div>
             </div>
             
             <div className="border-t border-gray-200 pt-4 mt-4">
-              <h3 className="text-lg font-medium mb-3">Preferences</h3>
+              <h3 className="text-lg font-medium mb-3">Tùy chọn</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-500">Theme</p>
-                  <p>{profile.preferences?.theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</p>
+                  <p className="text-sm text-gray-500">Giao diện</p>
+                  <p>{profile.preferences?.theme === 'dark' ? 'Chế độ tối' : 'Chế độ sáng'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Notifications</p>
-                  <p>{profile.preferences?.notifications ? 'Enabled' : 'Disabled'}</p>
+                  <p className="text-sm text-gray-500">Thông báo</p>
+                  <p>{profile.preferences?.notifications ? 'Đã bật' : 'Đã tắt'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">AI Task Suggestions</p>
-                  <p>{profile.preferences?.aiSuggestions ? 'Enabled' : 'Disabled'}</p>
+                  <p className="text-sm text-gray-500">Gợi ý từ AI</p>
+                  <p>{profile.preferences?.aiSuggestions ? 'Đã bật' : 'Đã tắt'}</p>
                 </div>
               </div>
             </div>
           </div>
         ) : (
           <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Edit Profile</h2>
+            <h2 className="text-xl font-semibold mb-4">Chỉnh sửa hồ sơ</h2>
             
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
                 <label htmlFor="displayName" className="block text-gray-700 text-sm font-bold mb-2">
-                  Display Name
+                  Tên hiển thị
                 </label>
                 <input
                   id="displayName"
@@ -198,7 +198,7 @@ const Profile: React.FC = () => {
               
               <div className="mb-4">
                 <label htmlFor="theme" className="block text-gray-700 text-sm font-bold mb-2">
-                  Theme
+                  Giao diện
                 </label>
                 <select
                   id="theme"
@@ -207,8 +207,8 @@ const Profile: React.FC = () => {
                   value={formData.theme}
                   onChange={handleChange}
                 >
-                  <option value="light">Light Mode</option>
-                  <option value="dark">Dark Mode</option>
+                  <option value="light">Chế độ sáng</option>
+                  <option value="dark">Chế độ tối</option>
                 </select>
               </div>
               
@@ -221,7 +221,7 @@ const Profile: React.FC = () => {
                     onChange={handleChange}
                     className="form-checkbox h-5 w-5 text-blue-600"
                   />
-                  <span className="ml-2 text-gray-700">Enable Notifications</span>
+                  <span className="ml-2 text-gray-700">Bật thông báo</span>
                 </label>
               </div>
               
@@ -234,7 +234,7 @@ const Profile: React.FC = () => {
                     onChange={handleChange}
                     className="form-checkbox h-5 w-5 text-blue-600"
                   />
-                  <span className="ml-2 text-gray-700">Enable AI Task Suggestions</span>
+                  <span className="ml-2 text-gray-700">Bật gợi ý từ AI</span>
                 </label>
               </div>
               
@@ -244,13 +244,13 @@ const Profile: React.FC = () => {
                   onClick={() => setIsEditing(false)}
                   className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2"
                 >
-                  Cancel
+                  Hủy
                 </button>
                 <button
                   type="submit"
                   className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
                 >
-                  Save Changes
+                  Lưu thay đổi
                 </button>
               </div>
             </form>

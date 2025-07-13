@@ -15,6 +15,12 @@ const TaskClient: React.FC = () => {
     priority: '',
     keyword: ''
   });
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    pages: 1
+  });
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -28,7 +34,7 @@ const TaskClient: React.FC = () => {
 
   useEffect(() => {
     fetchTasks();
-  }, [filters]);
+  }, [filters, pagination.page, pagination.limit]);
 
   const fetchTasks = async () => {
     setLoading(true);
@@ -38,10 +44,15 @@ const TaskClient: React.FC = () => {
       if (filters.category) queryParams.append('category', filters.category);
       if (filters.priority) queryParams.append('priority', filters.priority);
       if (filters.keyword) queryParams.append('keyword', filters.keyword);
+      queryParams.append('page', pagination.page.toString());
+      queryParams.append('limit', pagination.limit.toString());
 
       const response = await api.get(`/tasks?${queryParams.toString()}`);
       if (response.data.success) {
         setTasks(response.data.data);
+        if (response.data.pagination) {
+          setPagination(response.data.pagination);
+        }
       } else {
         setError('Không thể tải danh sách nhiệm vụ');
       }
@@ -76,7 +87,13 @@ const TaskClient: React.FC = () => {
       };
       const response = await api.post('/tasks', payload);
       if (response.data.success) {
+        // Thêm task mới vào đầu danh sách và cập nhật phân trang
         setTasks([response.data.data, ...tasks]);
+        setPagination(prev => ({
+          ...prev,
+          total: prev.total + 1,
+          pages: Math.ceil((prev.total + 1) / prev.limit)
+        }));
         setShowNewTaskForm(false);
         setNewTask({
           title: '',
@@ -122,6 +139,15 @@ const TaskClient: React.FC = () => {
       const response = await api.delete(`/tasks/${taskId}`);
       if (response.data.success) {
         setTasks(tasks.filter(task => task._id !== taskId));
+        setPagination(prev => {
+          const newTotal = prev.total - 1;
+          return {
+            ...prev,
+            total: newTotal,
+            pages: Math.ceil(newTotal / prev.limit),
+            page: prev.page > Math.ceil(newTotal / prev.limit) ? Math.ceil(newTotal / prev.limit) : prev.page
+          };
+        });
         setSuccessMessage('Xóa nhiệm vụ thành công!');
         setTimeout(() => setSuccessMessage(null), 3000);
       }
@@ -481,9 +507,170 @@ const TaskClient: React.FC = () => {
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
             </div>
           ) : tasks.length > 0 ? (
-            <div className="divide-y divide-gray-200">
-              {/* Task List */}
-            </div>
+            <>
+              <div className="divide-y divide-gray-200">
+                {tasks.map((task) => (
+                  <div key={task._id} className={`p-4 ${getPriorityColor(task.priority)} border-l-4`}>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-start">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-medium text-gray-900">{task.title}</h3>
+                            <div className="mt-1 flex flex-wrap gap-2">
+                              {getPriorityBadge(task.priority)}
+                              <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${getStatusColor(task.status)}`}>
+                                {task.status === 'not_started' ? 'Chưa bắt đầu' : 
+                                 task.status === 'in_progress' ? 'Đang thực hiện' : 'Hoàn thành'}
+                              </span>
+                              <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-800">
+                                {task.category === 'personal' ? 'Cá nhân' : 
+                                 task.category === 'work' ? 'Công việc' : 'Học tập'}
+                              </span>
+                            </div>
+                            {task.description && (
+                              <p className="mt-2 text-sm text-gray-600">{task.description}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-end space-y-2">
+                        <div className="text-sm text-gray-500">
+                          Hạn: {formatDate(task.dueDate)}
+                        </div>
+                        {task.isOverdue ? (
+                          <span className="text-red-600 font-medium text-sm">Quá hạn</span>
+                        ) : (
+                          getTimeRemaining(task.dueDate, task.status)
+                        )}
+                        <div className="flex space-x-2">
+                          {task.status !== 'completed' && (
+                            <button
+                              onClick={() => handleUpdateTaskStatus(task._id, 'completed')}
+                              className="text-xs bg-green-100 hover:bg-green-200 text-green-800 py-1 px-2 rounded transition-colors"
+                            >
+                              Hoàn thành
+                            </button>
+                          )}
+                          {task.status === 'not_started' && (
+                            <button
+                              onClick={() => handleUpdateTaskStatus(task._id, 'in_progress')}
+                              className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 py-1 px-2 rounded transition-colors"
+                            >
+                              Bắt đầu
+                            </button>
+                          )}
+                          {task.status === 'in_progress' && (
+                            <button
+                              onClick={() => handleUpdateTaskStatus(task._id, 'not_started')}
+                              className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-800 py-1 px-2 rounded transition-colors"
+                            >
+                              Tạm dừng
+                            </button>
+                          )}
+                          {task.status === 'completed' && (
+                            <button
+                              onClick={() => handleUpdateTaskStatus(task._id, 'in_progress')}
+                              className="text-xs bg-yellow-100 hover:bg-yellow-200 text-yellow-800 py-1 px-2 rounded transition-colors"
+                            >
+                              Làm lại
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeleteTask(task._id, task.title)}
+                            className="text-xs bg-red-100 hover:bg-red-200 text-red-800 py-1 px-2 rounded transition-colors"
+                          >
+                            Xóa
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Pagination */}
+              {pagination.pages > 1 && (
+                <div className="px-4 py-3 flex items-center justify-between border-t border-gray-200">
+                  <div className="flex-1 flex justify-between sm:hidden">
+                    <button
+                      onClick={() => setPagination({...pagination, page: Math.max(1, pagination.page - 1)})}
+                      disabled={pagination.page === 1}
+                      className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      Trước
+                    </button>
+                    <button
+                      onClick={() => setPagination({...pagination, page: Math.min(pagination.pages, pagination.page + 1)})}
+                      disabled={pagination.page === pagination.pages}
+                      className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      Sau
+                    </button>
+                  </div>
+                  <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm text-gray-700">
+                        Hiển thị <span className="font-medium">{(pagination.page - 1) * pagination.limit + 1}</span> đến <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> trong số <span className="font-medium">{pagination.total}</span> nhiệm vụ
+                      </p>
+                    </div>
+                    <div>
+                      <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        <button
+                          onClick={() => setPagination({...pagination, page: Math.max(1, pagination.page - 1)})}
+                          disabled={pagination.page === 1}
+                          className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                        >
+                          <span className="sr-only">Trang trước</span>
+                          <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                        
+                        {/* Page numbers */}
+                        {[...Array(Math.min(5, pagination.pages))].map((_, i) => {
+                          let pageNumber: number;
+                          if (pagination.pages <= 5) {
+                            pageNumber = i + 1;
+                          } else if (pagination.page <= 3) {
+                            pageNumber = i + 1;
+                          } else if (pagination.page >= pagination.pages - 2) {
+                            pageNumber = pagination.pages - 4 + i;
+                          } else {
+                            pageNumber = pagination.page - 2 + i;
+                          }
+                          
+                          return (
+                            <button
+                              key={`page-${pageNumber}`}
+                              onClick={() => setPagination({...pagination, page: pageNumber})}
+                              className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                                pagination.page === pageNumber
+                                  ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
+                                  : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                              }`}
+                            >
+                              {pageNumber}
+                            </button>
+                          );
+                        })}
+                        
+                        <button
+                          onClick={() => setPagination({...pagination, page: Math.min(pagination.pages, pagination.page + 1)})}
+                          disabled={pagination.page === pagination.pages}
+                          className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                        >
+                          <span className="sr-only">Trang sau</span>
+                          <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      </nav>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div className="py-20 text-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

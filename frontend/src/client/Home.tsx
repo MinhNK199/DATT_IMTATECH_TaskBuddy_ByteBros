@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { getAISuggestions, getAIPerformance } from '../services/api';
@@ -14,6 +14,28 @@ const Home: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [aiSuggestions, setAISuggestions] = useState<any[]>([]);
   const [aiPerformance, setAIPerformance] = useState<any>(null);
+  
+  // Chat box states
+  const [showChatBox, setShowChatBox] = useState(false);
+  const [messages, setMessages] = useState<{text: string, sender: 'user' | 'assistant', timestamp: Date}[]>([
+    {
+      text: 'Xin chào! Tôi là trợ lý ảo TaskBuddy. Tôi có thể hướng dẫn bạn sử dụng ứng dụng. Hãy hỏi tôi về:\n- Cách tạo nhiệm vụ mới\n- Quản lý nhiệm vụ\n- Phân loại và ưu tiên\n- Thống kê và báo cáo\n\nHoặc gõ "trợ giúp" để xem danh sách các lệnh.',
+      sender: 'assistant',
+      timestamp: new Date()
+    }
+  ]);
+  const [newMessage, setNewMessage] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to bottom of messages
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -136,6 +158,94 @@ const Home: React.FC = () => {
       return <span className="text-amber-600 text-sm">Còn {diffDays} ngày</span>;
     } else {
       return <span className="text-gray-500 text-sm">Còn {diffDays} ngày</span>;
+    }
+  };
+
+  // Handle sending a new message
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim()) return;
+
+    // Add user message to chat
+    const userMessage = {
+      text: newMessage,
+      sender: 'user' as const,
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, userMessage]);
+    setNewMessage('');
+    setIsTyping(true);
+
+    try {
+      // Simulate API call to get AI response
+      setTimeout(() => {
+        let response = '';
+        const query = newMessage.toLowerCase();
+        
+        // Hướng dẫn tổng quan về ứng dụng
+        if (query.includes('hướng dẫn') || query.includes('cách sử dụng') || query.includes('giới thiệu')) {
+          response = 'TaskBuddy là ứng dụng quản lý nhiệm vụ giúp bạn tổ chức công việc hiệu quả. Bạn muốn tìm hiểu về tính năng nào? Hãy hỏi về: "tạo nhiệm vụ", "quản lý nhiệm vụ", "phân loại", "thống kê" hoặc "hồ sơ".';
+        }
+        // Hướng dẫn tạo nhiệm vụ mới
+        else if (query.includes('tạo nhiệm vụ') || query.includes('thêm task') || query.includes('nhiệm vụ mới')) {
+          response = 'Để tạo nhiệm vụ mới:\n1. Nhấp vào nút "Tạo nhiệm vụ mới" ở trang chủ hoặc đi đến trang Nhiệm vụ\n2. Điền thông tin nhiệm vụ: tiêu đề, mô tả, danh mục, mức ưu tiên, hạn chót\n3. Nhấp "Lưu nhiệm vụ" để hoàn tất\n\nLưu ý: Tiêu đề và hạn chót là thông tin bắt buộc.';
+        }
+        // Hướng dẫn quản lý nhiệm vụ
+        else if (query.includes('quản lý nhiệm vụ') || query.includes('cập nhật task') || query.includes('sửa nhiệm vụ')) {
+          response = 'Để quản lý nhiệm vụ:\n1. Vào trang Nhiệm vụ để xem danh sách\n2. Bạn có thể thay đổi trạng thái nhiệm vụ bằng các nút: Bắt đầu, Hoàn thành, Tạm dừng\n3. Để xóa nhiệm vụ, nhấp vào nút "Xóa"\n4. Sử dụng bộ lọc để tìm nhiệm vụ theo trạng thái, danh mục, mức ưu tiên';
+        }
+        // Hướng dẫn về phân loại và tổ chức
+        else if (query.includes('phân loại') || query.includes('danh mục') || query.includes('ưu tiên')) {
+          response = 'TaskBuddy cho phép phân loại nhiệm vụ theo:\n1. Danh mục: Cá nhân, Công việc, Học tập\n2. Mức ưu tiên: Thấp, Trung bình, Cao\n3. Trạng thái: Chưa bắt đầu, Đang thực hiện, Hoàn thành\n\nBạn có thể sử dụng các bộ lọc này để sắp xếp và tìm kiếm nhiệm vụ.';
+        }
+        // Hướng dẫn về thống kê và báo cáo
+        else if (query.includes('thống kê') || query.includes('báo cáo') || query.includes('tiến độ')) {
+          response = 'Trang chủ hiển thị thống kê cơ bản về nhiệm vụ:\n1. Tổng số nhiệm vụ\n2. Số nhiệm vụ đã hoàn thành\n3. Số nhiệm vụ quá hạn\n\nBạn cũng có thể xem danh sách nhiệm vụ gần đây và nhận gợi ý từ AI để cải thiện năng suất.';
+        }
+        // Hướng dẫn về hồ sơ người dùng
+        else if (query.includes('hồ sơ') || query.includes('tài khoản') || query.includes('profile')) {
+          response = 'Để quản lý hồ sơ:\n1. Nhấp vào "Hồ sơ" trong menu\n2. Tại đây bạn có thể cập nhật thông tin cá nhân, đổi mật khẩu\n3. Bạn cũng có thể xem lịch sử hoạt động và thống kê cá nhân';
+        }
+        // Hướng dẫn về báo cáo vấn đề
+        else if (query.includes('báo lỗi') || query.includes('vấn đề') || query.includes('hỗ trợ')) {
+          response = 'Nếu bạn gặp vấn đề khi sử dụng TaskBuddy:\n1. Vào mục "Báo cáo" trong menu\n2. Điền thông tin chi tiết về vấn đề bạn gặp phải\n3. Đội ngũ hỗ trợ sẽ liên hệ lại trong thời gian sớm nhất';
+        }
+        // Hướng dẫn về tính năng AI
+        else if (query.includes('ai') || query.includes('trí tuệ nhân tạo') || query.includes('gợi ý')) {
+          response = 'TaskBuddy sử dụng AI để:\n1. Đưa ra gợi ý cải thiện năng suất dựa trên thói quen làm việc\n2. Phân tích hiệu suất hoàn thành nhiệm vụ\n3. Đề xuất cách sắp xếp thời gian hợp lý\n\nBạn có thể xem các gợi ý AI ở trang chủ.';
+        }
+        // Hướng dẫn về tính năng tìm kiếm
+        else if (query.includes('tìm kiếm') || query.includes('search') || query.includes('lọc')) {
+          response = 'Để tìm kiếm nhiệm vụ:\n1. Sử dụng thanh tìm kiếm ở trang Nhiệm vụ\n2. Lọc theo từ khóa, trạng thái, danh mục hoặc mức ưu tiên\n3. Kết quả sẽ được hiển thị ngay lập tức';
+        }
+        // Các lệnh trợ giúp
+        else if (query.includes('help') || query.includes('trợ giúp') || query.includes('lệnh')) {
+          response = 'Các lệnh hữu ích:\n- "hướng dẫn": Tổng quan về ứng dụng\n- "tạo nhiệm vụ": Cách tạo nhiệm vụ mới\n- "quản lý nhiệm vụ": Cách cập nhật và xóa nhiệm vụ\n- "phân loại": Thông tin về danh mục và ưu tiên\n- "thống kê": Xem báo cáo và tiến độ\n- "hồ sơ": Quản lý tài khoản\n- "báo lỗi": Cách báo cáo vấn đề';
+        }
+        // Chào hỏi
+        else if (query.includes('xin chào') || query.includes('hello') || query.includes('hi') || query.includes('chào')) {
+          response = `Xin chào${user ? ' ' + user.displayName.split(' ')[0] : ''}! Tôi là trợ lý TaskBuddy. Tôi có thể giúp bạn sử dụng ứng dụng. Hãy hỏi "trợ giúp" để xem các lệnh hữu ích.`;
+        }
+        // Cảm ơn
+        else if (query.includes('cảm ơn') || query.includes('thank')) {
+          response = 'Không có gì! Tôi luôn sẵn sàng hỗ trợ bạn sử dụng TaskBuddy. Có câu hỏi gì khác không?';
+        }
+        // Phản hồi mặc định
+        else {
+          response = 'Tôi chưa hiểu rõ câu hỏi của bạn. Bạn có thể hỏi về "hướng dẫn sử dụng", "tạo nhiệm vụ", "quản lý nhiệm vụ", hoặc gõ "trợ giúp" để xem danh sách các lệnh hữu ích.';
+        }
+
+        const assistantMessage = {
+          text: response,
+          sender: 'assistant' as const,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+        setIsTyping(false);
+      }, 1000);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setIsTyping(false);
     }
   };
 
@@ -279,8 +389,8 @@ const Home: React.FC = () => {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-medium text-indigo-700">Create New Task</h3>
-                      <p className="text-sm text-indigo-500">Add a new task to your list</p>
+                      <h3 className="font-medium text-indigo-700">Tạo nhiệm vụ mới</h3>
+                      <p className="text-sm text-indigo-500">Thêm nhiệm vụ mới vào danh sách</p>
                     </div>
                   </Link>
                   
@@ -294,8 +404,8 @@ const Home: React.FC = () => {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-medium text-purple-700">Update Profile</h3>
-                      <p className="text-sm text-purple-500">Edit your account settings</p>
+                      <h3 className="font-medium text-purple-700">Cập nhật hồ sơ</h3>
+                      <p className="text-sm text-purple-500">Chỉnh sửa thông tin tài khoản</p>
                     </div>
                   </Link>
                   
@@ -309,8 +419,8 @@ const Home: React.FC = () => {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-medium text-amber-700">View In Progress</h3>
-                      <p className="text-sm text-amber-500">Check your ongoing tasks</p>
+                      <h3 className="font-medium text-amber-700">Xem nhiệm vụ đang thực hiện</h3>
+                      <p className="text-sm text-amber-500">Kiểm tra các nhiệm vụ đang tiến hành</p>
                     </div>
                   </Link>
                 </div>
@@ -318,25 +428,25 @@ const Home: React.FC = () => {
 
               {/* Productivity Tips */}
               <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl shadow-sm border border-indigo-100 p-6">
-                <h3 className="text-lg font-bold text-gray-800 mb-4">Productivity Tips</h3>
+                <h3 className="text-lg font-bold text-gray-800 mb-4">Mẹo tăng năng suất</h3>
                 <ul className="space-y-3 text-gray-700">
                   <li className="flex items-start">
                     <svg className="h-5 w-5 text-indigo-600 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span>Break large tasks into smaller, manageable steps</span>
+                    <span>Chia nhỏ các nhiệm vụ lớn thành các bước nhỏ, dễ quản lý</span>
                   </li>
                   <li className="flex items-start">
                     <svg className="h-5 w-5 text-indigo-600 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span>Use the "2-minute rule" - if it takes less than 2 minutes, do it now</span>
+                    <span>Sử dụng "quy tắc 2 phút" - nếu làm dưới 2 phút, hãy làm ngay</span>
                   </li>
                   <li className="flex items-start">
                     <svg className="h-5 w-5 text-indigo-600 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span>Set specific deadlines for all your tasks</span>
+                    <span>Đặt thời hạn cụ thể cho tất cả nhiệm vụ của bạn</span>
                   </li>
                 </ul>
               </div>
@@ -366,6 +476,151 @@ const Home: React.FC = () => {
                 ))}
               </ul>
             )}
+          </div>
+        )}
+        
+        {/* Chat Box Button - Fixed at bottom right */}
+        <div className="fixed bottom-6 right-6 z-50">
+          <button
+            onClick={() => setShowChatBox(!showChatBox)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-4 shadow-lg flex items-center justify-center transition-all duration-300"
+            aria-label={showChatBox ? "Đóng hộp chat" : "Mở hộp chat"}
+          >
+            {showChatBox ? (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+            )}
+          </button>
+        </div>
+
+        {/* Chat Box */}
+        {showChatBox && (
+          <div className="fixed bottom-20 right-6 w-80 md:w-96 bg-white rounded-lg shadow-xl z-50 flex flex-col" style={{ height: '500px', maxHeight: '70vh' }}>
+            {/* Chat Header */}
+            <div className="bg-indigo-600 text-white px-4 py-3 rounded-t-lg flex justify-between items-center">
+              <div className="flex items-center">
+                <div className="bg-white rounded-full p-1 mr-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-medium">Trợ lý TaskBuddy</h3>
+                  <p className="text-xs text-indigo-200">Trực tuyến</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowChatBox(false)}
+                className="text-white hover:text-indigo-200"
+                aria-label="Đóng hộp chat"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Chat Messages */}
+            <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+              {messages.map((message, index) => (
+                <div key={index} className={`mb-4 flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div 
+                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                      message.sender === 'user' 
+                        ? 'bg-indigo-600 text-white rounded-br-none' 
+                        : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none'
+                    }`}
+                  >
+                    <p className="text-sm">{message.text}</p>
+                    <p className="text-xs mt-1 opacity-70">
+                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {isTyping && (
+                <div className="flex justify-start mb-4">
+                  <div className="bg-white border border-gray-200 rounded-lg px-4 py-2 rounded-bl-none">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+            
+            {/* Chat Input */}
+            <form onSubmit={handleSendMessage} className="border-t border-gray-200 p-4 bg-white rounded-b-lg">
+              {/* Quick Help Buttons */}
+              <div className="mb-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewMessage('hướng dẫn sử dụng');
+                    setTimeout(() => handleSendMessage(new Event('submit') as any), 100);
+                  }}
+                  className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 text-xs py-1 px-2 rounded-full"
+                >
+                  Hướng dẫn sử dụng
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewMessage('tạo nhiệm vụ');
+                    setTimeout(() => handleSendMessage(new Event('submit') as any), 100);
+                  }}
+                  className="bg-green-100 hover:bg-green-200 text-green-700 text-xs py-1 px-2 rounded-full"
+                >
+                  Tạo nhiệm vụ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewMessage('quản lý nhiệm vụ');
+                    setTimeout(() => handleSendMessage(new Event('submit') as any), 100);
+                  }}
+                  className="bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs py-1 px-2 rounded-full"
+                >
+                  Quản lý nhiệm vụ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewMessage('thống kê');
+                    setTimeout(() => handleSendMessage(new Event('submit') as any), 100);
+                  }}
+                  className="bg-amber-100 hover:bg-amber-200 text-amber-700 text-xs py-1 px-2 rounded-full"
+                >
+                  Thống kê
+                </button>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Nhập tin nhắn..."
+                  className="flex-1 border border-gray-300 rounded-l-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <button
+                  type="submit"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-r-lg"
+                  aria-label="Gửi tin nhắn"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L13.586 11H3a1 1 0 110-2h10.586l-3.293-3.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </form>
           </div>
         )}
       </div>
